@@ -30,6 +30,19 @@ class Edge(object):
    def __str__(self):
        return str(self.src) + '->' + str(self.dest)
 
+
+class WeightedEdge(Edge):
+    def __init__(self, src, dest, dist, outside):
+        self.src = src
+        self.dest = dest
+        self.dist = dist
+        self.outside = outside
+    def getDist(self):
+        return self.dist
+    def getOutside(self):
+        return self.outside
+
+
 class Digraph(object):
    """
    A directed graph
@@ -60,3 +73,11 @@ class Digraph(object):
                res = res + str(k) + '->' + str(d) + '\n'
        return res[:-1]
 
+class WeightedDigraph(Digraph):
+    def addEdge(self, edge):
+        src = edge.getSource()
+        dest = edge.getDestination()
+        dist = edge.getDist()
+        outside = edge.getOutside()
+
+        # Right now, destinations of edges are added to the src nodes.  Figure out how to attach the weights to them.
