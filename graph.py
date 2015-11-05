@@ -41,6 +41,8 @@ class WeightedEdge(Edge):
         return self.dist
     def getOutside(self):
         return self.outside
+    def __str__(self):
+       return str(self.src) + '->' + str(self.dest) + "  " + self.outside + "  " + self.dist
 
 
 class Digraph(object):
@@ -79,5 +81,9 @@ class WeightedDigraph(Digraph):
         dest = edge.getDestination()
         dist = edge.getDist()
         outside = edge.getOutside()
+        if not(src in self.nodes and dest in self.nodes):
+           raise ValueError('Node not in graph')
+        self.edges[src].append((dest, outside, dist))
+
 
         # Right now, destinations of edges are added to the src nodes.  Figure out how to attach the weights to them.
