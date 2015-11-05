@@ -83,7 +83,7 @@ class WeightedDigraph(Digraph):
         outside = edge.getOutside()
         if not(src in self.nodes and dest in self.nodes):
            raise ValueError('Node not in graph')
-        self.edges[src].append((dest, outside, dist))
+        self.edges[src].append((dest, dist, outside))
 
 
         # Right now, destinations of edges are added to the src nodes.  Figure out how to attach the weights to them.

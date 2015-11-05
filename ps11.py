@@ -7,7 +7,7 @@
 #
 
 import string
-from graph import Digraph, Edge, Node
+from graph import Digraph, Edge, Node, WeightedEdge, WeightedDigraph
 
 #
 # Problem 2: Building up the Campus Map
@@ -15,6 +15,7 @@ from graph import Digraph, Edge, Node
 # Write a couple of sentences describing how you will model the
 # problem as a graph)
 #
+# Buildings - nodes.  Paths - edges.
 
 def load_map(mapFilename):
     """ 
@@ -36,6 +37,16 @@ def load_map(mapFilename):
     """
     #TODO
     print "Loading map from file..."
+
+    mitMap = WeightedDigraph()
+
+    f = open('mit_map.txt', 'r')
+    for l in f:
+        line = l.split()
+        mitMap.addNode(line[0])
+        mitMap.addNode(line[1])
+        newEdge = WeightedEdge(line[0], line[1], line[2], line[3])
+        mitMap.addEdge(newEdge)
 
 #
 # Problem 3: Finding the Shortest Path using Brute Force Search
