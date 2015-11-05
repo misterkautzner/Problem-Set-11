@@ -54,7 +54,8 @@ class Digraph(object):
        self.edges = {}
    def addNode(self, node):
        if node in self.nodes:
-           raise ValueError('Duplicate node')
+           #raise ValueError('Duplicate node')
+           pass
        else:
            self.nodes.add(node)
            self.edges[node] = []

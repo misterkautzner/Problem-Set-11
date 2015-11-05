@@ -48,6 +48,10 @@ def load_map(mapFilename):
         newEdge = WeightedEdge(line[0], line[1], line[2], line[3])
         mitMap.addEdge(newEdge)
 
+    print mitMap
+
+load_map('mit_map.txt')
+
 #
 # Problem 3: Finding the Shortest Path using Brute Force Search
 #
