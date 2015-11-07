@@ -35,7 +35,7 @@ def load_map(mapFilename):
     Returns:
         a directed graph representing the map
     """
-    #TODO
+
     print "Loading map from file..."
 
     mitMap = WeightedDigraph()
@@ -48,9 +48,9 @@ def load_map(mapFilename):
         newEdge = WeightedEdge(line[0], line[1], line[2], line[3])
         mitMap.addEdge(newEdge)
 
-    print mitMap
+    return mitMap
 
-load_map('mit_map.txt')
+mitMap = load_map('mit_map.txt')
 
 #
 # Problem 3: Finding the Shortest Path using Brute Force Search
@@ -58,6 +58,32 @@ load_map('mit_map.txt')
 # State the optimization problem as a function to minimize
 # and the constraints
 #
+
+def recursiveSearch(digraph, currentPath, nodePath, end):
+    """
+    Continues down the current path.  returns a complete path.
+    """
+    allPaths = []
+    for child in digraph.childrenOf(nodePath): #for each of the children of the current node    nodePath[-1]
+        if child[0] not in nodePath:  #The first element of child is the node.  I need to search the first element of each element in                                                currentPath, not currentPath itself.
+            print "child = ", child
+            print "currentPath = ", currentPath
+            appendPath = list(currentPath)
+            appendPath.append(child)
+            appendNodePath = list(nodePath)  #Right now this is turning '32' into ['3', '2'] (only for first) bc of removed [-1] above
+            appendNodePath.append(child[0])
+
+            # Rewrite code so that allPaths returns a list of nodes followed by a summed tuple (totalDist, outside)
+            # Just pass the list down each time along with the tuple
+            # Rather than passing a list of tuples down?
+
+            if child[0] != end:
+                allPaths += recursiveSearch(digraph, appendPath, appendNodePath, end)
+
+            else:
+                allPaths += appendPath
+
+            return allPaths
 
 def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):    
     """
@@ -83,8 +109,37 @@ def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):
         If there exists no path that satisfies maxTotalDist and
         maxDistOutdoors constraints, then raises a ValueError.
     """
-    #TODO
-    pass
+
+    path = start
+#I need a loop that generates paths and adds them to allPaths
+    allPaths = [recursiveSearch(digraph, [(path, '0', '0')], path, end)]  #I had (path, 0, 0) instead of path before.
+
+    minPath = maxTotalDist
+    bestPath = None
+
+    print "allPaths = ", allPaths
+
+    for p in allPaths:
+        print "p = ", p
+        totDist = 0
+        for e in p:
+            print "e = ", e
+            totDist += e[1]
+        if totDist < minPath:
+            bestPath = p
+            minPath = totDist
+            outDist = 0
+            for e in p:
+                outDist += e[2]
+
+    listOfNodes = []
+    for edge in bestPath:
+        listOfNodes += edge[0]
+
+    print listOfNodes
+    return listOfNodes
+
+bruteForceSearch(mitMap, '32', '56', 1000, 1000)
 
 #
 # Problem 4: Finding the Shorest Path using Optimized Search Method
