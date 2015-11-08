@@ -59,31 +59,43 @@ mitMap = load_map('mit_map.txt')
 # and the constraints
 #
 
-def recursiveSearch(digraph, currentPath, nodePath, end):
+def recursiveSearch(digraph, path, nodePath, end):
     """
     Continues down the current path.  returns a complete path.
     """
     allPaths = []
-    for child in digraph.childrenOf(nodePath): #for each of the children of the current node    nodePath[-1]
-        if child[0] not in nodePath:  #The first element of child is the node.  I need to search the first element of each element in                                                currentPath, not currentPath itself.
-            print "child = ", child
-            print "currentPath = ", currentPath
-            appendPath = list(currentPath)
-            appendPath.append(child)
-            appendNodePath = list(nodePath)  #Right now this is turning '32' into ['3', '2'] (only for first) bc of removed [-1] above
+    for child in digraph.childrenOf(path[-1][0]):
+        if child[0] not in nodePath:
+            #print "child[0] = ", child[0]
+            #print "child = ", child
+            appendNodePath = list(nodePath)
             appendNodePath.append(child[0])
-
-            # Rewrite code so that allPaths returns a list of nodes followed by a summed tuple (totalDist, outside)
-            # Just pass the list down each time along with the tuple
-            # Rather than passing a list of tuples down?
+            appendPath = list(path)
+            appendPath.append(child)
+            #print "appendPath = ", appendPath
+            #print "appendNodePath = ", appendNodePath
 
             if child[0] != end:
                 allPaths += recursiveSearch(digraph, appendPath, appendNodePath, end)
 
             else:
                 allPaths += appendPath
+                print allPaths
 
-            return allPaths
+    return allPaths
+
+def sumPath(path):
+    dist = 0
+    outside = 0
+    for edge in path:
+        a = int(edge[1])
+        b = int(edge[2])
+        dist += a
+        outside += b
+
+    return dist, outside
+
+#sumPath([('32', 0, 0), ('36', '70', '0'), ('26', '34', '0'), ('16', '45', '0'), ('56', '30', '0')])
 
 def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):    
     """
@@ -110,9 +122,12 @@ def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):
         maxDistOutdoors constraints, then raises a ValueError.
     """
 
-    path = start
+    path = [(start, 0, 0)]
+    nodePath = [start]
+    dist = 0
+    outside = 0
 #I need a loop that generates paths and adds them to allPaths
-    allPaths = [recursiveSearch(digraph, [(path, '0', '0')], path, end)]  #I had (path, 0, 0) instead of path before.
+    allPaths = [recursiveSearch(digraph, path, nodePath, end)]  #I had (path, 0, 0) instead of path before.
 
     minPath = maxTotalDist
     bestPath = None
@@ -120,23 +135,22 @@ def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):
     print "allPaths = ", allPaths
 
     for p in allPaths:
-        print "p = ", p
-        totDist = 0
-        for e in p:
-            print "e = ", e
-            totDist += e[1]
-        if totDist < minPath:
+        dist, outside = sumPath(p)
+        if dist < minPath:
             bestPath = p
-            minPath = totDist
-            outDist = 0
-            for e in p:
-                outDist += e[2]
+            minPath = dist
+            outDist = outside
+
+    if dist > maxTotalDist:
+        return "Distance is too great!"
+    if outDist > maxDistOutdoors:
+        return "Outside distance is too great!"
 
     listOfNodes = []
     for edge in bestPath:
-        listOfNodes += edge[0]
+        listOfNodes.append(edge[0])
 
-    print listOfNodes
+    print "listOfNodes = ", listOfNodes
     return listOfNodes
 
 bruteForceSearch(mitMap, '32', '56', 1000, 1000)
