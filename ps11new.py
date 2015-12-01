@@ -83,13 +83,14 @@ def shortestPath(graph, start, end, maxDist, maxOutDist, visited = []):  #Figure
          raise ValueError ('Start or End not in graph.')
     path = [start[0]]
     if start[0] == end:
-        return path, 0, 0
+        # print "Start = End"
+        return path, 0, 0 #int(start[1]), int(start[2])
     shortest = None
     shortestWeight = 0
     shortestOutDist = 0
     for node in graph.childrenOf(start[0]):
-        if (str(node[0]) not in visited):
-            visited = visited + [str(node[0])] #new list
+        if (node[0] not in visited):
+            visited = visited + [node[0]] #new list
             newPath, weight, outDist = shortestPath(graph, node, end, maxDist, maxOutDist, visited)
             weight += int(node[1])
             outDist += int(node[2])
@@ -106,10 +107,10 @@ def shortestPath(graph, start, end, maxDist, maxOutDist, visited = []):  #Figure
         path = None
     return path, shortestWeight, shortestOutDist
 
-path, weight, outDist = shortestPath(mitMap, ('24', 0, 0), '13', 1000, 1000)
-print path
-print weight
-print outDist
+# path, weight, outDist = shortestPath(mitMap, ('24', 0, 0), '13', 1000, 1000)
+# print path
+# print weight
+# print outDist
 
 def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):
     """
@@ -135,25 +136,30 @@ def bruteForceSearch(digraph, start, end, maxTotalDist, maxDistOutdoors):
         If there exists no path that satisfies maxTotalDist and
         maxDistOutdoors constraints, then raises a ValueError.
     """
-
+    if start == end:
+        return [start]
     start = (start, 0, 0)
-    end = end
-    try:
-        path, dist, outDist = shortestPath(digraph, start, end, maxTotalDist, maxDistOutdoors)
-    except:
-        raise ValueError ("No path with these constraints exists.")
+    path, dist, outDist = shortestPath(digraph, start, end, maxTotalDist, maxDistOutdoors)
+    if path == None:
+        path, dist, outDist = shortestPath(digraph, (end, 0, 0), start[0], maxTotalDist, maxDistOutdoors)
+        if path == None:
+            raise ValueError("No path exists with these constraints")
+        revPath = [0] * len(path)
+        for i in range(0, len(path)):
+            revPath[i] = path[len(path) - 1 - i]
+        return revPath
 
     return path
 
 
-# print bruteForceSearch(mitMap, '32', '56', 1000, 1000)
+# print bruteForceSearch(mitMap, '1', '32', 1000000, 0)
 
 #
 # Problem 4: Finding the Shortest Path using Optimized Search Method
 #
 
 
-def optRecursiveSearch(graph, start, end, maxDist, maxOutDist, shortestDist = None, visited = []):
+def optRecursiveSearch(graph, start, end, maxDist, maxOutDist, visited = [], memo = {}):
     """
     Continues down the current path.  returns a complete path.
     """
@@ -165,10 +171,13 @@ def optRecursiveSearch(graph, start, end, maxDist, maxOutDist, shortestDist = No
     shortestOutDist = 0
     for node in graph.childrenOf(start[0]):
         if (str(node[0]) not in visited):
-            visited = visited + [str(node[0])] #new list
-            newPath, weight, outDist = shortestPath(graph, node, end, maxDist, maxOutDist, shortestDist, visited)
-            weight += int(node[1])
-            outDist += int(node[2])
+            visited = visited + [str(node[0])]
+            try:
+                newPath, weight, outDist = memo[node, end]
+            except:
+                newPath, weight, outDist = optRecursiveSearch(graph, node, end, maxDist, maxOutDist, visited, memo)
+                weight += int(node[1])
+                outDist += int(node[2])
             if newPath == None:
                 continue
             if (shortest == None or weight < shortestWeight):
@@ -176,6 +185,7 @@ def optRecursiveSearch(graph, start, end, maxDist, maxOutDist, shortestDist = No
                     shortest = newPath
                     shortestWeight = weight
                     shortestOutDist = outDist
+                    memo[node, end] = newPath, weight, outDist
     if shortest != None:
         path = path + shortest
     else:
@@ -208,36 +218,24 @@ def directedDFS(digraph, start, end, maxTotalDist, maxDistOutdoors):
         maxDistOutdoors constraints, then raises a ValueError.
     """
 
-    path = [start]
-    allPaths, bestDist = optRecursiveSearch(digraph, path, 0, 0, maxTotalDist, maxDistOutdoors, end)  #I had (path, 0, 0) instead of path before.
-    print "bestDist = ", bestDist
-    # minPath = maxTotalDist
-    # bestPath = None
-    #
-    # #print "allPaths = ", allPaths
-    #
-    # for p in allPaths:
-    #     dist, outside = sumPath(p)
-    #     if dist < minPath:
-    #         bestPath = p
-    #         minPath = dist
-    #         outDist = outside
+    if start == end:
+        return [start]
+    start = (start, 0, 0)
+    path, dist, outDist = optRecursiveSearch(digraph, start, end, maxTotalDist, maxDistOutdoors)
+    if path == None:
+        path, dist, outDist = optRecursiveSearch(digraph, (end, 0, 0), start[0], maxTotalDist, maxDistOutdoors)
+        if path == None:
+            raise ValueError("No path exists with these constraints")
+        revPath = [0] * len(path)
+        for i in range(0, len(path)):
+            revPath[i] = path[len(path) - 1 - i]
+        return revPath
 
-    # if dist > maxTotalDist:
-    #     return "Distance is too great!"
-    # if outDist > maxDistOutdoors:
-    #     return "Outside distance is too great!"
-    #
-    # listOfNodes = []
-    # for edge in bestPath:
-    #     listOfNodes.append(edge[0])
+    return path
 
-    print "listOfNodes = ", allPaths
-    return allPaths
+# print directedDFS(mitMap, '32', '56', 200, 200)
 
-#directedDFS(mitMap, '32', '56', 200, 200)
-
-# Uncomment below when ready to test
+#Uncomment below when ready to test
 # if __name__ == '__main__':
 #    # Test cases
 #    digraph = load_map("mit_map.txt")
@@ -254,100 +252,100 @@ def directedDFS(digraph, start, end, maxTotalDist, maxDistOutdoors):
 #    print "Expected: ", expectedPath1
 #    print "Brute-force: ", brutePath1
 #    print "DFS: ", dfsPath1
-##
-##    # Test case 2
-##    print "---------------"
-##    print "Test case 2:"
-##    print "Find the shortest-path from Building 32 to 56 without going outdoors"
-##    expectedPath2 = ['32', '36', '26', '16', '56']
-##    brutePath2 = bruteForceSearch(digraph, '32', '56', LARGE_DIST, 0)
-##    dfsPath2 = directedDFS(digraph, '32', '56', LARGE_DIST, 0)
-##    print "Expected: ", expectedPath2
-##    print "Brute-force: ", brutePath2
-##    print "DFS: ", dfsPath2
-##
-##    # Test case 3
-##    print "---------------"
-##    print "Test case 3:"
-##    print "Find the shortest-path from Building 2 to 9"
-##    expectedPath3 = ['2', '3', '7', '9']
-##    brutePath3 = bruteForceSearch(digraph, '2', '9', LARGE_DIST, LARGE_DIST)
-##    dfsPath3 = directedDFS(digraph, '2', '9', LARGE_DIST, LARGE_DIST)
-##    print "Expected: ", expectedPath3
-##    print "Brute-force: ", brutePath3
-##    print "DFS: ", dfsPath3
-##
-##    # Test case 4
-##    print "---------------"
-##    print "Test case 4:"
-##    print "Find the shortest-path from Building 2 to 9 without going outdoors"
-##    expectedPath4 = ['2', '4', '10', '13', '9']
-##    brutePath4 = bruteForceSearch(digraph, '2', '9', LARGE_DIST, 0)
-##    dfsPath4 = directedDFS(digraph, '2', '9', LARGE_DIST, 0)
-##    print "Expected: ", expectedPath4
-##    print "Brute-force: ", brutePath4
-##    print "DFS: ", dfsPath4
-##
-##    # Test case 5
-##    print "---------------"
-##    print "Test case 5:"
-##    print "Find the shortest-path from Building 1 to 32"
-##    expectedPath5 = ['1', '4', '12', '32']
-##    brutePath5 = bruteForceSearch(digraph, '1', '32', LARGE_DIST, LARGE_DIST)
-##    dfsPath5 = directedDFS(digraph, '1', '32', LARGE_DIST, LARGE_DIST)
-##    print "Expected: ", expectedPath5
-##    print "Brute-force: ", brutePath5
-##    print "DFS: ", dfsPath5
-##
-##    # Test case 6
-##    print "---------------"
-##    print "Test case 6:"
-##    print "Find the shortest-path from Building 1 to 32 without going outdoors"
-##    expectedPath6 = ['1', '3', '10', '4', '12', '24', '34', '36', '32']
-##    brutePath6 = bruteForceSearch(digraph, '1', '32', LARGE_DIST, 0)
-##    dfsPath6 = directedDFS(digraph, '1', '32', LARGE_DIST, 0)
-##    print "Expected: ", expectedPath6
-##    print "Brute-force: ", brutePath6
-##    print "DFS: ", dfsPath6
-##
-##    # Test case 7
-##    print "---------------"
-##    print "Test case 7:"
-##    print "Find the shortest-path from Building 8 to 50 without going outdoors"
-##    bruteRaisedErr = 'No'
-##    dfsRaisedErr = 'No'
-##    try:
-##        bruteForceSearch(digraph, '8', '50', LARGE_DIST, 0)
-##    except ValueError:
-##        bruteRaisedErr = 'Yes'
-##
-##    try:
-##        directedDFS(digraph, '8', '50', LARGE_DIST, 0)
-##    except ValueError:
-##        dfsRaisedErr = 'Yes'
-##
-##    print "Expected: No such path! Should throw a value error."
-##    print "Did brute force search raise an error?", bruteRaisedErr
-##    print "Did DFS search raise an error?", dfsRaisedErr
-##
-##    # Test case 8
-##    print "---------------"
-##    print "Test case 8:"
-##    print "Find the shortest-path from Building 10 to 32 without walking"
-##    print "more than 100 meters in total"
-##    bruteRaisedErr = 'No'
-##    dfsRaisedErr = 'No'
-##    try:
-##        bruteForceSearch(digraph, '10', '32', 100, LARGE_DIST)
-##    except ValueError:
-##        bruteRaisedErr = 'Yes'
-##
-##    try:
-##        directedDFS(digraph, '10', '32', 100, LARGE_DIST)
-##    except ValueError:
-##        dfsRaisedErr = 'Yes'
-##
-##    print "Expected: No such path! Should throw a value error."
-##    print "Did brute force search raise an error?", bruteRaisedErr
-##    print "Did DFS search raise an error?", dfsRaisedErr
-
+#
+#    # Test case 2
+#    print "---------------"
+#    print "Test case 2:"
+#    print "Find the shortest-path from Building 32 to 56 without going outdoors"
+#    expectedPath2 = ['32', '36', '26', '16', '56']
+#    brutePath2 = bruteForceSearch(digraph, '32', '56', LARGE_DIST, 0)
+#    dfsPath2 = directedDFS(digraph, '32', '56', LARGE_DIST, 0)
+#    print "Expected: ", expectedPath2
+#    print "Brute-force: ", brutePath2
+#    print "DFS: ", dfsPath2
+#
+#    # Test case 3
+#    print "---------------"
+#    print "Test case 3:"
+#    print "Find the shortest-path from Building 2 to 9"
+#    expectedPath3 = ['2', '3', '7', '9']
+#    brutePath3 = bruteForceSearch(digraph, '2', '9', LARGE_DIST, LARGE_DIST)
+#    dfsPath3 = directedDFS(digraph, '2', '9', LARGE_DIST, LARGE_DIST)
+#    print "Expected: ", expectedPath3
+#    print "Brute-force: ", brutePath3
+#    print "DFS: ", dfsPath3
+#
+#    # Test case 4
+#    print "---------------"
+#    print "Test case 4:"
+#    print "Find the shortest-path from Building 2 to 9 without going outdoors"
+#    expectedPath4 = ['2', '4', '10', '13', '9']
+#    brutePath4 = bruteForceSearch(digraph, '2', '9', LARGE_DIST, 0)
+#    dfsPath4 = directedDFS(digraph, '2', '9', LARGE_DIST, 0)
+#    print "Expected: ", expectedPath4
+#    print "Brute-force: ", brutePath4
+#    print "DFS: ", dfsPath4
+#
+#    # Test case 5
+#    print "---------------"
+#    print "Test case 5:"
+#    print "Find the shortest-path from Building 1 to 32"
+#    expectedPath5 = ['1', '4', '12', '32']
+#    brutePath5 = bruteForceSearch(digraph, '1', '32', LARGE_DIST, LARGE_DIST)
+#    dfsPath5 = directedDFS(digraph, '1', '32', LARGE_DIST, LARGE_DIST)
+#    print "Expected: ", expectedPath5
+#    print "Brute-force: ", brutePath5
+#    print "DFS: ", dfsPath5
+#
+#    # Test case 6
+#    print "---------------"
+#    print "Test case 6:"
+#    print "Find the shortest-path from Building 1 to 32 without going outdoors"
+#    expectedPath6 = ['1', '3', '10', '4', '12', '24', '34', '36', '32']
+#    brutePath6 = bruteForceSearch(digraph, '1', '32', LARGE_DIST, 0)
+#    dfsPath6 = directedDFS(digraph, '1', '32', LARGE_DIST, 0)
+#    print "Expected: ", expectedPath6
+#    print "Brute-force: ", brutePath6
+#    print "DFS: ", dfsPath6
+#
+#    # Test case 7
+#    print "---------------"
+#    print "Test case 7:"
+#    print "Find the shortest-path from Building 8 to 50 without going outdoors"
+#    bruteRaisedErr = 'No'
+#    dfsRaisedErr = 'No'
+#    try:
+#        bruteForceSearch(digraph, '8', '50', LARGE_DIST, 0)
+#    except ValueError:
+#        bruteRaisedErr = 'Yes'
+#
+#    try:
+#        directedDFS(digraph, '8', '50', LARGE_DIST, 0)
+#    except ValueError:
+#        dfsRaisedErr = 'Yes'
+#
+#    print "Expected: No such path! Should throw a value error."
+#    print "Did brute force search raise an error?", bruteRaisedErr
+#    print "Did DFS search raise an error?", dfsRaisedErr
+#
+#    # Test case 8
+#    print "---------------"
+#    print "Test case 8:"
+#    print "Find the shortest-path from Building 10 to 32 without walking"
+#    print "more than 100 meters in total"
+#    bruteRaisedErr = 'No'
+#    dfsRaisedErr = 'No'
+#    try:
+#        bruteForceSearch(digraph, '10', '32', 100, LARGE_DIST)
+#    except ValueError:
+#        bruteRaisedErr = 'Yes'
+#
+#    try:
+#        directedDFS(digraph, '10', '32', 100, LARGE_DIST)
+#    except ValueError:
+#        dfsRaisedErr = 'Yes'
+# 
+#    print "Expected: No such path! Should throw a value error."
+#    print "Did brute force search raise an error?", bruteRaisedErr
+#    print "Did DFS search raise an error?", dfsRaisedErr
+#
